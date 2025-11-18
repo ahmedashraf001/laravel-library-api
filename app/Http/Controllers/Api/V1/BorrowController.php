@@ -83,7 +83,10 @@ class BorrowController extends Controller
         // 200 Successful response
         // 500 Internal Server Error
         try {
-            $borrowRecords = BorrowRecord::with('book:id,title')->get();
+            // Include soft-deleted books in history (users borrowed them in the past)
+            $borrowRecords = BorrowRecord::with(['book' => function($query) {
+                $query->withTrashed()->select('id', 'title');
+            }])->get();
             return BorrowRecordResource::collection($borrowRecords);
 
         } catch (\Exception $e) {
