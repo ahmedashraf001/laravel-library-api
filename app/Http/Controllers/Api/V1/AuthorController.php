@@ -14,10 +14,19 @@ class AuthorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-           $authors = Author::all(); 
-         return AuthorResource::collection($authors);
+        // Get pagination parameters from request, with defaults
+        $perPage = $request->input('per_page', 15);
+        
+        // Validate per_page to ensure it's reasonable (1-100) limits
+        if ($perPage > 100) $perPage = 100;
+        if ($perPage < 1) $perPage = 15;
+        
+        // Paginate authors
+        $authors = Author::paginate($perPage);
+        
+        return AuthorResource::collection($authors);
     }
 
     /**

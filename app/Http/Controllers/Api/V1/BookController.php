@@ -16,8 +16,16 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
-            // Fetch books with author relationship  
-            $books = Book::with('author:id,name')->get(); // only fetch the id and name of the author for performance  
+            // Get pagination parameters from request, with defaults
+            $perPage = $request->input('per_page', 15);
+            
+            // Validate per_page to ensure it's reasonable (1-100) limits
+            if ($perPage > 100) $perPage = 100;
+            if ($perPage < 1) $perPage = 15;
+
+            // Fetch books with author relationship (only fetch id and name for performance)
+            $books = Book::with('author:id,name')->paginate($perPage);
+            
             // Return collection of books
             return BookResource::collection($books);       
          
