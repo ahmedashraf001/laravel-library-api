@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthorController;
 use App\Http\Controllers\Api\V1\BookController;
+use App\Http\Controllers\Api\V1\BorrowController;
 // v1 API routes
  Route::prefix('v1')->group(function(){
     // Authors Resource
@@ -18,5 +19,10 @@ use App\Http\Controllers\Api\V1\BookController;
     Route::get('books/{id}',[BookController::class,'show']);
     Route::put('books/{id}',[BookController::class,'update']);
     Route::delete('books/{id}',[BookController::class,'destroy']);
+
+    // Borrow Resource
+    Route::post('borrow',[BorrowController::class,'borrow']);
+    Route::post('return/{borrow_id}',[BorrowController::class,'return']);
+    Route::get('history',[BorrowController::class,'history']);
  });
 
