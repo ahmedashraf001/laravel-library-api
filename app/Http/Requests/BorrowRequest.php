@@ -25,7 +25,7 @@ class BorrowRequest extends FormRequest
     {
         return [
             'user_name' => 'required|string|max:255',
-            'book_id' => 'required|exists:books,id',
+            'book_id' => 'required|exists:books,id,deleted_at,NULL',
         ];
     }
 
