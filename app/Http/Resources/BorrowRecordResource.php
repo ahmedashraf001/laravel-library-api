@@ -19,10 +19,11 @@ class BorrowRecordResource extends JsonResource
             'user_name' => $this->user_name,
             'book_id' => $this->book_id,
             // include book if it loaded via eager loading when borrow records are fetched
-            'book' => $this->when($this->relationLoaded('book'), function() {
+            'book' => $this->when($this->relationLoaded('book') && $this->book, function() {
                 return [
                     'id' => $this->book->id,
                     'title' => $this->book->title,
+                    'is_deleted' => $this->book->trashed(), // Show if book is soft-deleted
                 ];
             }),
             'borrow_at' => $this->borrow_at,

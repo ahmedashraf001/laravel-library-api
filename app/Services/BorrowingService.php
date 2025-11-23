@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\BorrowRecord;
 use App\Exceptions\BookAlreadyBorrowedException;
 use App\Exceptions\BookAlreadyReturnedException;
+use App\Exceptions\BookNotFoundException;   
+use App\Http\Resources\BorrowRecordResource;
 class BorrowingService
 {
    public function borrow(string $userName, int $bookId){
@@ -24,11 +26,18 @@ class BorrowingService
         'borrow_at' => now(),
      ]);
 
-     return  $borrowRecord->load('book');
+    return response()->json([
+        'message' => 'Book borrowed successfully',
+    ], 200);
 
     }
 
-   public function return(BorrowRecord $borrowRecord){
+   public function return(int $borrowId){
+
+        $borrowRecord = BorrowRecord::find($borrowId);
+        if(!$borrowRecord){
+            throw new BookNotFoundException('Resource not found.');
+        }
     
          if($borrowRecord->return_at){
             throw new BookAlreadyReturnedException(
@@ -38,6 +47,16 @@ class BorrowingService
         }
         $borrowRecord->update([ 'return_at' => now() ]);
 
-        return $borrowRecord->load('book');
+        return response()->json([
+            'message' => 'Book returned successfully',
+        ], 200);  
+     }
+   
+   public function history( ){
+        // Include soft-deleted books in history
+        $borrowRecords = BorrowRecord::with(['book' => function($query) {
+            $query->withTrashed()->select('id', 'title');
+        }])->orderBy('borrow_at', 'desc')->get();
+        return BorrowRecordResource::collection($borrowRecords);
    }
 }
