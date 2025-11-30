@@ -6,18 +6,11 @@ use App\Models\BorrowRecord;
 use App\Exceptions\BookAlreadyBorrowedException;
 use App\Exceptions\BookAlreadyReturnedException;
 use App\Exceptions\BookNotFoundException;   
-use App\Http\Resources\BorrowRecordResource;
 class BorrowingService
 {
-   public function borrow(string $userName, int $bookId){
+   public function borrow(string $userName, int $bookId) : BorrowRecord {
     // book already borrowed(Business Rule) -> throw custom Exception
-    $isBorrowed = BorrowRecord::where('book_id',$bookId)
-                                ->whereNull('return_at')
-                                ->exists();
-
-    if($isBorrowed){
-        throw new BookAlreadyBorrowedException('The book is already borrowed');
-    }
+    $this->ensureBookIsNotBorrowed($bookId);
 
      // create borrow record
      $borrowRecord = BorrowRecord::create([
@@ -26,30 +19,20 @@ class BorrowingService
         'borrow_at' => now(),
      ]);
 
-    return response()->json([
-        'message' => 'Book borrowed successfully',
-    ], 200);
+    return $borrowRecord;
 
     }
 
    public function return(int $borrowId){
 
         $borrowRecord = BorrowRecord::find($borrowId);
-        if(!$borrowRecord){
-            throw new BookNotFoundException('Resource not found.');
-        }
-    
-         if($borrowRecord->return_at){
-            throw new BookAlreadyReturnedException(
-                'This book has already been returned.',
-                $borrowRecord->return_at
-            );
-        }
+
+        $this->ensureBorrowRecordExists($borrowRecord);
+        $this->ensureBorrowRecordIsNotReturned($borrowRecord);
+
         $borrowRecord->update([ 'return_at' => now() ]);
 
-        return response()->json([
-            'message' => 'Book returned successfully',
-        ], 200);  
+        return $borrowRecord;
      }
    
    public function history( ){
@@ -57,6 +40,33 @@ class BorrowingService
         $borrowRecords = BorrowRecord::with(['book' => function($query) {
             $query->withTrashed()->select('id', 'title');
         }])->orderBy('borrow_at', 'desc')->get();
-        return BorrowRecordResource::collection($borrowRecords);
+        return $borrowRecords;
    }
+
+
+   public function ensureBookIsNotBorrowed(int $bookId){
+    $isBorrowed = BorrowRecord::where('book_id',$bookId)
+                                ->whereNull('return_at')
+                                ->exists();
+
+    if($isBorrowed){
+        throw new BookAlreadyBorrowedException('The book is already borrowed');
+    }
+   }
+   public function ensureBorrowRecordExists(?BorrowRecord $borrowRecord) 
+   {
+    if(!$borrowRecord){
+        throw new BookNotFoundException('Resource not found.');
+    }
+   }
+   public function ensureBorrowRecordIsNotReturned(BorrowRecord $borrowRecord)
+   {
+    if($borrowRecord->return_at){
+        throw new BookAlreadyReturnedException(
+            'This book has already been returned.',
+            $borrowRecord->return_at
+        );
+    }
+   }
+
 }

@@ -26,7 +26,9 @@ class AuthorController extends Controller
     public function index(IndexAuthorsRequest $request)
     {
         try {
-            return $this->authorService->index($request);
+            $data = $request->validated();
+            $authors = $this->authorService->index($data);
+            return AuthorResource::collection($authors);
             // 422 Validation error is automatically handled by IndexAuthorsRequest
         } catch (\Exception $e) {
             // 500 Internal Server Error
@@ -42,8 +44,11 @@ class AuthorController extends Controller
      */
     public function store(StoreAuthorRequest $request)
     {
-        try {
-            return $this->authorService->store($request->validated());
+        try { 
+            $author = $this->authorService->store($request->validated());
+            return response()->json([
+                'message' => 'Author created successfully',
+            ], 200);
             // 422 Validation error is automatically handled by StoreAuthorRequest
         } catch (\Exception $e) {
             // 500 Internal Server Error
@@ -60,7 +65,8 @@ class AuthorController extends Controller
     public function show(string $id)
     {
         try{
-            return $this->authorService->show($id);
+            $author = $this->authorService->show($id);
+            return new AuthorResource($author);
         }
         catch (AuthorNotFoundException $e) {
             // 404 Resource not found
@@ -84,7 +90,10 @@ class AuthorController extends Controller
     public function update(UpdateAuthorRequest $request, int $id)
     {
         try {
-            return $this->authorService->update($id, $request->validated());
+            $author = $this->authorService->update($id, $request->validated());
+            return  response()->json([
+                'message' => 'Author updated successfully',
+            ], 200);
 
             // 422 Validation error
             // has been handled by the UpdateAuthorRequest class
@@ -111,7 +120,8 @@ class AuthorController extends Controller
     public function destroy(string $id)
     {
         try {
-            return $this->authorService->destroy($id);
+            $author= $this->authorService->destroy($id);
+            return response()->noContent();
         } 
         catch (AuthorNotFoundException $e) {
             // 404 Resource not found

@@ -24,7 +24,8 @@ class BookController extends Controller
     public function index(IndexBooksRequest $request)
     {
             try{
-                return $this->bookService->index($request);
+                $books = $this->bookService->index($request->validated());
+                return BookResource::collection($books);
                 // 422 Validation error is automatically handled by IndexBooksRequest
             } catch (\Exception $e) {
                 // 500 Internal Server Error
@@ -41,7 +42,10 @@ class BookController extends Controller
     public function store(StoreBookRequest $request)
     {
         try {
-            return $this->bookService->store($request->validated());
+            $book = $this->bookService->store($request->validated());
+            return response()->json([
+                'message' => 'Book created successfully',
+            ], 200);
             // 422 Validation error is automatically handled by StoreBookRequest
         } catch (\Exception $e) {
             // 500 Internal Server Error
@@ -58,7 +62,8 @@ class BookController extends Controller
     public function show(string $id)
     {
         try {
-            return $this->bookService->show($id);
+            $book = $this->bookService->show($id);
+            return new BookResource($book);
         }
         catch (BookNotFoundException $e) {
             // 404 Resource not found
@@ -82,7 +87,10 @@ class BookController extends Controller
     public function update(UpdateBookRequest $request, int $id)
     {
         try {
-           return $this->bookService->update($id, $request->validated());
+           $book= $this->bookService->update($id, $request->validated());
+           return response()->json([
+            'message' => 'Book updated successfully',
+        ], 200);
             // 422 Validation error
             // has been handled by the UpdateBookRequest class
         }
@@ -108,7 +116,8 @@ class BookController extends Controller
     public function destroy(string $id)
     {
         try {
-            return $this->bookService->destroy($id);
+            $book= $this->bookService->destroy($id);
+            return response()->noContent();
         }
         catch (BookNotFoundException $e) {
             // 404 Resource not found

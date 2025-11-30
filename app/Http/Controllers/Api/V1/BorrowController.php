@@ -23,7 +23,10 @@ class BorrowController extends Controller
     {
             //422 Validation error(Form Request handled) or book already borrowed(Business Rule)
             try {
-                return $this->borrowingService->borrow($request->user_name, $request->book_id);
+                $borrowRecord = $this->borrowingService->borrow($request->user_name, $request->book_id);
+                return response()->json([
+                    'message' => 'Book borrowed successfully',
+                ], 200);
             }catch(BookAlreadyBorrowedException $e){
                 return response()->json([
                     'message' => $e->getMessage(),
@@ -42,7 +45,10 @@ class BorrowController extends Controller
 
         //422 Validation error(Form Request handled) or book already borrowed(Business Rule)
         try {
-            return $this->borrowingService->return($borrowId);
+            $borrowRecord = $this->borrowingService->return($borrowId);
+            return response()->json([
+                'message' => 'Book returned successfully',
+            ], 200); 
         }catch(BookNotFoundException $e){
             //404 Resource not found
             return response()->json([
@@ -69,7 +75,8 @@ class BorrowController extends Controller
 
         try {
             // 200 Successful response
-            return $this->borrowingService->history();
+            $borrowRecords = $this->borrowingService->history();
+            return BorrowRecordResource::collection($borrowRecords);
         } catch (\Exception $e) {
             //500 Internal Server Error
             return response()->json([
