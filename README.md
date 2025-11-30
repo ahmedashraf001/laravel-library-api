@@ -1,59 +1,143 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Library Management API (Laravel 12)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A clean, well-structured REST API for managing a small library:
 
-## About Laravel
+### **Business Problem**
+Libraries need a simple digital system to track **authors, books, and borrowing operations**, while enforcing business rules to keep data consistent.
+### **Solution**
+ - **Main use cases**:
+  - Manage authors (create, list, update, delete).
+  - Manage books linked to authors (can't delete authors that have books).
+  - Borrow and return books with business rules (no double-borrowing, cannot return twice).
+  - View full borrowing history (who borrowed what and when).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### This is a public API for easy testing and demonstration.
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## API Documentation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+📘 **OpenAPI Specification (Swagger UI)**
+- [View Interactive API Docs](https://app.swaggerhub.com/apis-docs/ahmed-dd0/library-api001/1.0)
+- Complete schema definitions with all request/response examples
 
-## Learning Laravel
+🔧 **Postman Collection**
+- [Test APIs in Postman](https://documenter.getpostman.com/view/31504317/2sB3WwrdVa)
+- Pre-configured requests ready to run
+---
+## Tech Stack & Architecture
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Framework**: Laravel **12**, PHP **8.2+**.
+- **Data layer**: Eloquent models & migrations (e.g. `books` table with `author_id` FK).
+- **API design**:
+  - **Versioned routes** under `api.php` → `/api/v1/...`
+  - Resource-style controllers: `AuthorController`, `BookController`, `BorrowController`.
+  - **Form Requests** (e.g. `StoreAuthorRequest`, `BorrowRequest`) for validation.
+  - **API Resources** (e.g. `AuthorResource`, `BookResource`, `BorrowRecordResource`) for consistent JSON.
+- **Domain logic**:
+  - `BorrowingService` encapsulates borrowing/return rules.
+  - Custom domain exceptions: `BookAlreadyBorrowedException`, `BookAlreadyReturnedException`.
+- **Quality & DX**:
+  - OpenAPI 3 spec in `openAPI.yml`.
+  - Testing via `php artisan test` .
+- **Technologies**
+  - **Service Layer** for Borrowing System(Business logic separation for maintainability) , **PostgreSQL** , **Eloquent ORM** ,**Pest PHP**	
+  
+## Design Patterns & Principles
+This project demonstrates clean code principles and software engineering best practices:
+- **RESTful Design** - Standard HTTP methods and meaningful status codes
+- **Request Validation** - Dedicated Form Request classes with custom error handling
+- **Resource Layer** - Consistent API responses with `AuthorResource`, `BookResource`
+- **Service Pattern** - `BorrowingService` encapsulates complex business logic
+- **Repository Pattern** - Eloquent models with clear relationships
+- **Custom Exceptions** - Business rule violations (`BookAlreadyBorrowedException`)
+- **Soft Deletes** - Non-destructive data removal for audit trails
+- **Feature Testing** - Comprehensive test coverage with Pest PHP
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
+## Project Setup
 
-## Laravel Sponsors
+#### 1. Requirements
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **PHP**: 8.2+
+- **Composer**
+- **Database**:PostgreSQL 12 or higher
 
-### Premium Partners
+ ### Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. **Clone the repository**
+```bash
+git clone <your-repository-url>
+cd laravel-library-api
+```
 
-## Contributing
+2. **Install dependencies**
+```bash
+composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. **Setup environment**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Code of Conduct
+4. **Setup database**
+```bash
+# Create PostgreSQL database first
+# Using psql: CREATE DATABASE library_api;
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Update .env with your PostgreSQL credentials
+# DB_CONNECTION=pgsql
+# DB_HOST=127.0.0.1
+# DB_PORT=5432
+# DB_DATABASE=library_api
+# DB_USERNAME=postgres
+# DB_PASSWORD=your_password
 
-## Security Vulnerabilities
+# Run migrations
+php artisan migrate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# (Optional) Seed sample data
+php artisan db:seed
+```
 
-## License
+5. **Start the development server**
+```bash
+php artisan serve
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The API will be available at `http://localhost:8000/api/v1`
+
+ 
+
+---
+
+ 
+ 
+ 
+## Testing
+
+This project uses **Pest PHP** for clean, readable tests.
+
+### Run All Tests
+```bash
+php artisan test
+```
+
+### Run Specific Test Suites
+```bash
+# Test authors API
+php artisan test --filter=AuthorApiTest
+
+# Test books API
+php artisan test --filter=BookApiTest
+
+# Test borrowing system
+php artisan test --filter=BorrowTest
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Author CRUD** , **Book CRUD** , **Borrowing Workflow** , **Business Rules** , **Validation**  , **Error Handling**  
+---
