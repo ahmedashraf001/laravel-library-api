@@ -3,49 +3,57 @@ namespace App\Services;
 use App\Models\Author;
 use App\Exceptions\AuthorNotFoundException;
 use App\Exceptions\AuthorHasBooksException;
+use App\Interfaces\AuthorRepositoryInterface;
+use App\Repositories\AuthorRepository;
  class AuthorService
 {
+    private AuthorRepositoryInterface $authorRepository;
+    public function __construct(AuthorRepositoryInterface $authorRepository)
+    {
+        $this->authorRepository = $authorRepository;
+    }
+
     public function index(array $data)
     {
         $per_page = $data['per_page'] ?? 15;
-        // Fetch authors with books relationship (only fetch id and name for performance)
-        $authors = Author::with('books:id,title')->paginate($per_page);
+        $authors = $this->authorRepository->paginate($per_page);
+
         // 200 Successful response
         // Return collection of authors
         return $authors;
     }
     public function show(int $id) :Author
     {
-        $author = Author::find($id);
+        $author = $this->authorRepository->find($id);
         // using guard clause(private method) to improve code readability and maintainability.
         $this->ensureAuthorExists($author);
         return $author;
     }
     public function store(array $data) :Author
     {
-        $author = Author::create($data);
+        $author = $this->authorRepository->create($data);
         // 200 Author created successfully
         return $author;
     }
     public function update(int $id, array $data)
     {
-        $author = Author::find($id);
+        $author = $this->authorRepository->find($id);
         // using guard clause(private method) to improve code readability and maintainability.
         $this->ensureAuthorExists($author);
 
-        $author->update($data);
+        $author = $this->authorRepository->update($id , $data);
         // 200 Author updated successfully
         return $author;
     }
     public function destroy(int $id)
     {
-        $author = Author::find($id);
+        $author = $this->authorRepository->find($id);
 
         // using guard clause(private method) to improve code readability and maintainability.
         $this->ensureAuthorExists($author);
-        $this->ensureAuthorHasNoBooks($author);
+        $this->ensureAuthorHasNoBooks($id);
        
-        $author->delete();
+        $this->authorRepository->delete($id);
         // 204 Author deleted successfully
         return $author;
     }
@@ -57,9 +65,9 @@ use App\Exceptions\AuthorHasBooksException;
             throw new AuthorNotFoundException('Resource not found.');
         }
     }
-    public function ensureAuthorHasNoBooks(Author $author) 
+    public function ensureAuthorHasNoBooks(int $id) 
     {
-        if($author->books->count()){
+        if($this->authorRepository->isAuthorHasBooks($id)){
             throw new AuthorHasBooksException('Cannot delete author with associated books');
         }
     }

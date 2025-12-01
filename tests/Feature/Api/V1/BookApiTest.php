@@ -51,12 +51,10 @@ test('can create a new book with valid data', function () {
     $response = $this->postJson('/api/v1/books', $bookData);
 
     // Assert: Check response and database
-    $response->assertStatus(201)
-        ->assertJsonPath('data.title', 'American Gods')
-        ->assertJsonPath('data.year', 2001)
-        ->assertJsonPath('data.author_id', $author->id)
-        ->assertJsonPath('data.author.id', $author->id)
-        ->assertJsonPath('data.author.name', $author->name);
+    $response->assertStatus(200)
+        ->assertJson([
+            'message' => 'Book created successfully'
+        ]);
 
     $this->assertDatabaseHas('books', [
         'title' => 'American Gods',

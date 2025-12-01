@@ -1,0 +1,132 @@
+<?php
+
+namespace Tests\Unit\Services;
+
+use App\Services\AuthorService;
+use App\Interfaces\AuthorRepositoryInterface;
+use App\Models\Author;
+use App\Exceptions\AuthorNotFoundException;
+use App\Exceptions\AuthorHasBooksException;
+use Mockery;
+use Tests\TestCase;
+
+class AuthorServiceTest extends TestCase
+{
+    private $mockRepository;
+    private $authorService;
+
+    /**
+     * This method runs before each test
+     * We set up our mock repository and service here
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Create a fake (mock) repository that we can control
+        $this->mockRepository = Mockery::mock(AuthorRepositoryInterface::class);
+        
+        // Create the service with our fake repository
+        $this->authorService = new AuthorService($this->mockRepository);
+    }
+
+    /**
+     * Test 1: index() should return paginated authors from repository
+     */
+    public function test_index_returns_authors_from_repository()
+    {
+        // Arrange: Create fake author data
+        $fakeAuthors = collect([
+            new Author(['id' => 1, 'name' => 'J.K. Rowling']),
+            new Author(['id' => 2, 'name' => 'George Orwell']),
+        ]);
+        
+        // Tell our fake repository: "When paginate(15) is called, return fake authors"
+        $this->mockRepository
+            ->shouldReceive('paginate')
+            ->once() // Should be called exactly once
+            ->with(15) // With parameter 15
+            ->andReturn($fakeAuthors); // Return our fake data
+        
+        // Act: Call the service method
+        $result = $this->authorService->index(['per_page' => 15]);
+        
+        // Assert: Check we got the expected result
+        $this->assertEquals($fakeAuthors, $result);
+    }
+
+    
+    /**
+     * Test 2: store() should create author successfully
+     */
+    public function test_store_creates_author_successfully()
+    {
+        // Arrange: Prepare data and expected result
+        $authorData = [
+            'name' => 'Neil Gaiman',
+            'bio' => 'Author of fantasy novels',
+            'dob' => '1960-11-10'
+        ];
+        
+        $createdAuthor = new Author([
+            'id' => 1,
+            'name' => 'Neil Gaiman',
+            'bio' => 'Author of fantasy novels',
+            'dob' => '1960-11-10'
+        ]);
+        
+        // Tell fake repository what to do when create() is called
+        $this->mockRepository
+            ->shouldReceive('create')
+            ->once()
+            ->with($authorData)
+            ->andReturn($createdAuthor);
+        
+        // Act: Call store method
+        $result = $this->authorService->store($authorData);
+        
+        // Assert: Check we got the created author
+        $this->assertEquals($createdAuthor, $result);
+        $this->assertEquals('Neil Gaiman', $result->name);
+    }
+
+    /**
+     * Test 3: destroy() should throw exception when author has books
+     */
+    public function test_destroy_throws_exception_when_author_has_books()
+    {
+        // Arrange: Create fake author with books
+        $author = new Author(['id' => 1, 'name' => 'Author With Books']);
+        
+        // Tell fake repository: author exists
+        $this->mockRepository
+            ->shouldReceive('find')
+            ->once()
+            ->with(1)
+            ->andReturn($author);
+        
+        // Tell fake repository: this author has books
+        $this->mockRepository
+            ->shouldReceive('isAuthorHasBooks')
+            ->once()
+            ->with(1)
+            ->andReturn(true); // Has books!
+        
+        // Assert: Expect exception because author has books
+        $this->expectException(AuthorHasBooksException::class);
+        
+        // Act: Try to delete author with books
+        $this->authorService->destroy(1);
+    }
+
+    /**
+     * This method runs after each test
+     * Clean up our mocks
+     */
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+}
+

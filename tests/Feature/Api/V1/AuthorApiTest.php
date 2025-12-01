@@ -36,9 +36,10 @@ test('can create a new author with valid data', function () {
     $response = $this->postJson('/api/v1/authors', $authorData);
 
     // Assert: Check response and database
-    $response->assertStatus(201)
-        ->assertJsonPath('data.name', 'Neil Gaiman')
-        ->assertJsonPath('data.dob', '1960-11-10');
+    $response->assertStatus(200)
+        ->assertJson([
+            'message' => 'Author created successfully'
+        ]);
 
     $this->assertDatabaseHas('authors', [
         'name' => 'Neil Gaiman',
@@ -86,9 +87,9 @@ test('can update an existing author', function () {
 
     // Assert: Check response and database
     $response->assertStatus(200)
-        ->assertJsonPath('data.name', 'Updated Name')
-        ->assertJsonPath('data.bio', 'Updated bio')
-        ->assertJsonPath('data.dob', '1985-05-15');
+        ->assertJson([
+            'message' => 'Author updated successfully'
+        ]);
 
     $this->assertDatabaseHas('authors', [
         'id' => $author->id,

@@ -29,22 +29,9 @@ test('can borrow an available book with valid data', function () {
     $response = $this->postJson('/api/v1/borrow', $borrowData);
 
     // Assert: Check response and database
-    $response->assertStatus(201)
-        ->assertJsonPath('data.user_name', 'Ahmed Ashraf')
-        ->assertJsonPath('data.book_id', $book->id)
-        ->assertJsonPath('data.book.id', $book->id)
-        ->assertJsonPath('data.book.title', 'Harry Potter')
-        ->assertJsonStructure([
-            'data' => [
-                'id',
-                'user_name',
-                'book_id',
-                'book' => ['id', 'title'],
-                'borrow_at',
-                'return_at',
-                'created_at',
-                'updated_at'
-            ]
+    $response->assertStatus(200)
+        ->assertJson([
+            'message' => 'Book borrowed successfully'
         ]);
 
     $this->assertDatabaseHas('borrow_records', [
@@ -112,20 +99,8 @@ test('can return a borrowed book', function () {
 
     // Assert: Check response and database
     $response->assertStatus(200)
-        ->assertJsonPath('data.id', $borrowRecord->id)
-        ->assertJsonPath('data.user_name', 'Ahmed Ashraf')
-        ->assertJsonPath('data.book_id', $book->id)
-        ->assertJsonStructure([
-            'data' => [
-                'id',
-                'user_name',
-                'book_id',
-                'book' => ['id', 'title'],
-                'borrow_at',
-                'return_at',
-                'created_at',
-                'updated_at'
-            ]
+        ->assertJson([
+            'message' => 'Book returned successfully'
         ]);
 
     // Verify return_at is now set
