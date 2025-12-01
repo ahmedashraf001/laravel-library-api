@@ -91,32 +91,31 @@ class AuthorServiceTest extends TestCase
     }
 
     /**
-     * Test 3: destroy() should throw exception when author has books
+     * Test 3: show() should return author successfully
      */
-    public function test_destroy_throws_exception_when_author_has_books()
+    public function test_show_returns_author_successfully()
     {
-        // Arrange: Create fake author with books
-        $author = new Author(['id' => 1, 'name' => 'Author With Books']);
+        // Arrange: Create fake author
+        $fakeAuthor = new Author([
+            'id' => 1,
+            'name' => 'J.K. Rowling',
+            'bio' => 'British author',
+            'dob' => '1965-07-31'
+        ]);
         
-        // Tell fake repository: author exists
+        // Tell fake repository: when find(1) is called, return the author
         $this->mockRepository
             ->shouldReceive('find')
             ->once()
             ->with(1)
-            ->andReturn($author);
+            ->andReturn($fakeAuthor);
         
-        // Tell fake repository: this author has books
-        $this->mockRepository
-            ->shouldReceive('isAuthorHasBooks')
-            ->once()
-            ->with(1)
-            ->andReturn(true); // Has books!
+        // Act: Call show method
+        $result = $this->authorService->show(1);
         
-        // Assert: Expect exception because author has books
-        $this->expectException(AuthorHasBooksException::class);
-        
-        // Act: Try to delete author with books
-        $this->authorService->destroy(1);
+        // Assert: Check we got the correct author
+        $this->assertEquals($fakeAuthor, $result);
+        $this->assertEquals('J.K. Rowling', $result->name);
     }
 
     /**

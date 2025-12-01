@@ -51,7 +51,7 @@ use App\Repositories\AuthorRepository;
 
         // using guard clause(private method) to improve code readability and maintainability.
         $this->ensureAuthorExists($author);
-        $this->ensureAuthorHasNoBooks($id);
+        $this->ensureAuthorHasNoBooks($author);
        
         $this->authorRepository->delete($id);
         // 204 Author deleted successfully
@@ -65,9 +65,9 @@ use App\Repositories\AuthorRepository;
             throw new AuthorNotFoundException('Resource not found.');
         }
     }
-    public function ensureAuthorHasNoBooks(int $id) 
+    public function ensureAuthorHasNoBooks(Author $author) 
     {
-        if($this->authorRepository->isAuthorHasBooks($id)){
+        if($author->books->count()){
             throw new AuthorHasBooksException('Cannot delete author with associated books');
         }
     }

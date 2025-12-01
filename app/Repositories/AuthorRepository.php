@@ -33,9 +33,4 @@ class AuthorRepository implements AuthorRepositoryInterface
     {
         return $this->author->find($id)->delete();
     }
-    public function isAuthorHasBooks(int $id)
-    {
-        $author = $this->author->find($id);
-        return $author->books->count() > 0 ? true : false;
-    }
 }
