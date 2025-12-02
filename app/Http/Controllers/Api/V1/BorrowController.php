@@ -11,20 +11,24 @@ use App\Exceptions\BookAlreadyReturnedException;
 use App\Services\BorrowingService;
 use App\Http\Resources\BorrowRecordResource;
 use App\Models\BorrowRecord;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Exceptions\BookNotFoundException;
+use App\DTOs\BorrowRequestDTO;
 class BorrowController extends Controller
 {
+    private BorrowingService $borrowingService;
+    public function __construct(BorrowingService $borrowingService)
+    {
+        $this->borrowingService = $borrowingService;
+    }
     public function borrow(BorrowRequest $request)
     {
             //422 Validation error(Form Request handled) or book already borrowed(Business Rule)
             try {
-                 
-                $borrowRecord = (new BorrowingService())->borrow($request->user_name, $request->book_id);
-
-                return (new BorrowRecordResource($borrowRecord))
-                        ->response()
-                        ->setStatusCode(201);
-
+                $dto = BorrowRequestDTO::fromRequest($request);
+                $borrowRecord = $this->borrowingService->borrow($dto);
+                return response()->json([
+                    'message' => 'Book borrowed successfully',
+                ], 200);
             }catch(BookAlreadyBorrowedException $e){
                 return response()->json([
                     'message' => $e->getMessage(),
@@ -37,30 +41,21 @@ class BorrowController extends Controller
                     'errors' => (object) []
                 ], 500);
             }
-          
-            
     }
 
     public function return(int $borrowId){
 
         //422 Validation error(Form Request handled) or book already borrowed(Business Rule)
         try {
-            $borrowRecord = BorrowRecord::findOrFail($borrowId);
-            $borrowRecordreturned = (new BorrowingService())->return( $borrowRecord);
-
-            return (new BorrowRecordResource( $borrowRecordreturned))
-                    ->response()
-                    ->setStatusCode(200);
-
-        }catch(ModelNotFoundException $e){
+            $borrowRecord = $this->borrowingService->return($borrowId);
+            return response()->json([
+                'message' => 'Book returned successfully',
+            ], 200); 
+        }catch(BookNotFoundException $e){
             //404 Resource not found
             return response()->json([
-                'message' => 'Resource not found.',
-                'errors' => [
-                    'id' => [
-                        'The requested resource does not exist.'
-                    ]
-                ]
+                'message' => $e->getMessage(),
+                'errors' => $e->errors()
             ], 404);
         }catch(BookAlreadyReturnedException $e){
             //422 Book already returned
@@ -78,17 +73,12 @@ class BorrowController extends Controller
     
     }
 
-    public function history(Request $request){
+    public function history(){
 
-        // 200 Successful response
-        // 500 Internal Server Error
         try {
-            // Include soft-deleted books in history (users borrowed them in the past)
-            $borrowRecords = BorrowRecord::with(['book' => function($query) {
-                $query->withTrashed()->select('id', 'title');
-            }])->get();
+            // 200 Successful response
+            $borrowRecords = $this->borrowingService->history();
             return BorrowRecordResource::collection($borrowRecords);
-
         } catch (\Exception $e) {
             //500 Internal Server Error
             return response()->json([
