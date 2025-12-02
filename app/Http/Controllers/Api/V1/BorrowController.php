@@ -12,6 +12,7 @@ use App\Services\BorrowingService;
 use App\Http\Resources\BorrowRecordResource;
 use App\Models\BorrowRecord;
 use App\Exceptions\BookNotFoundException;
+use App\DTOs\BorrowRequestDTO;
 class BorrowController extends Controller
 {
     private BorrowingService $borrowingService;
@@ -23,7 +24,8 @@ class BorrowController extends Controller
     {
             //422 Validation error(Form Request handled) or book already borrowed(Business Rule)
             try {
-                $borrowRecord = $this->borrowingService->borrow($request->user_name, $request->book_id);
+                $dto = BorrowRequestDTO::fromRequest($request);
+                $borrowRecord = $this->borrowingService->borrow($dto);
                 return response()->json([
                     'message' => 'Book borrowed successfully',
                 ], 200);

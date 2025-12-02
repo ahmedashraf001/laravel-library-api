@@ -9,6 +9,8 @@ use App\Exceptions\AuthorNotFoundException;
 use App\Exceptions\AuthorHasBooksException;
 use Mockery;
 use Tests\TestCase;
+use App\DTOs\AuthorListRequestDTO;
+use App\DTOs\StoreAuthorDTO;
 
 class AuthorServiceTest extends TestCase
 {
@@ -40,16 +42,18 @@ class AuthorServiceTest extends TestCase
             new Author(['id' => 1, 'name' => 'J.K. Rowling']),
             new Author(['id' => 2, 'name' => 'George Orwell']),
         ]);
-        
+
+        // Create DTO directly using constructor
+        $dto = new AuthorListRequestDTO(per_page: 15);
         // Tell our fake repository: "When paginate(15) is called, return fake authors"
         $this->mockRepository
             ->shouldReceive('paginate')
             ->once() // Should be called exactly once
-            ->with(15) // With parameter 15
+            ->with($dto->per_page) // With parameter 15
             ->andReturn($fakeAuthors); // Return our fake data
         
         // Act: Call the service method
-        $result = $this->authorService->index(['per_page' => 15]);
+        $result = $this->authorService->index($dto);
         
         // Assert: Check we got the expected result
         $this->assertEquals($fakeAuthors, $result);
@@ -62,11 +66,11 @@ class AuthorServiceTest extends TestCase
     public function test_store_creates_author_successfully()
     {
         // Arrange: Prepare data and expected result
-        $authorData = [
-            'name' => 'Neil Gaiman',
-            'bio' => 'Author of fantasy novels',
-            'dob' => '1960-11-10'
-        ];
+        $dto = new StoreAuthorDTO(
+            name: 'Neil Gaiman',
+            bio:'Author of fantasy novels',
+            dob: '1960-11-10'
+        );
         
         $createdAuthor = new Author([
             'id' => 1,
@@ -79,11 +83,11 @@ class AuthorServiceTest extends TestCase
         $this->mockRepository
             ->shouldReceive('create')
             ->once()
-            ->with($authorData)
+            ->with($dto->toArray())
             ->andReturn($createdAuthor);
         
         // Act: Call store method
-        $result = $this->authorService->store($authorData);
+        $result = $this->authorService->store($dto);
         
         // Assert: Check we got the created author
         $this->assertEquals($createdAuthor, $result);

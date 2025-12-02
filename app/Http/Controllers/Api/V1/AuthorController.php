@@ -13,6 +13,9 @@ use App\Http\Requests\IndexAuthorsRequest;
 use App\Exceptions\AuthorNotFoundException;
 use App\Exceptions\AuthorHasBooksException;
 use App\Services\AuthorService;
+use App\DTOs\AuthorListRequestDTO;
+use App\DTOs\StoreAuthorDTO;
+use App\DTOs\UpdateAuthorDTO;
 class AuthorController extends Controller
 {
     private AuthorService $authorService;
@@ -26,8 +29,8 @@ class AuthorController extends Controller
     public function index(IndexAuthorsRequest $request)
     {
         try {
-            $data = $request->validated();
-            $authors = $this->authorService->index($data);
+            $dto = AuthorListRequestDTO::fromRequest($request);
+            $authors = $this->authorService->index($dto);
             return AuthorResource::collection($authors);
             // 422 Validation error is automatically handled by IndexAuthorsRequest
         } catch (\Exception $e) {
@@ -45,7 +48,8 @@ class AuthorController extends Controller
     public function store(StoreAuthorRequest $request)
     {
         try { 
-            $author = $this->authorService->store($request->validated());
+            $dto = StoreAuthorDTO::fromRequest($request);
+            $author = $this->authorService->store($dto);
             return response()->json([
                 'message' => 'Author created successfully',
             ], 200);
@@ -90,7 +94,8 @@ class AuthorController extends Controller
     public function update(UpdateAuthorRequest $request, int $id)
     {
         try {
-            $author = $this->authorService->update($id, $request->validated());
+            $dto = UpdateAuthorDTO::fromRequest($request);
+            $author = $this->authorService->update($id, $dto);
             return  response()->json([
                 'message' => 'Author updated successfully',
             ], 200);

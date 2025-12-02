@@ -5,6 +5,9 @@ use App\Exceptions\AuthorNotFoundException;
 use App\Exceptions\AuthorHasBooksException;
 use App\Interfaces\AuthorRepositoryInterface;
 use App\Repositories\AuthorRepository;
+use App\DTOs\AuthorListRequestDTO;
+use App\DTOs\StoreAuthorDTO;
+use App\DTOs\UpdateAuthorDTO;
  class AuthorService
 {
     private AuthorRepositoryInterface $authorRepository;
@@ -13,9 +16,9 @@ use App\Repositories\AuthorRepository;
         $this->authorRepository = $authorRepository;
     }
 
-    public function index(array $data)
+    public function index(AuthorListRequestDTO $dto)
     {
-        $per_page = $data['per_page'] ?? 15;
+        $per_page = $dto->per_page;
         $authors = $this->authorRepository->paginate($per_page);
 
         // 200 Successful response
@@ -29,19 +32,19 @@ use App\Repositories\AuthorRepository;
         $this->ensureAuthorExists($author);
         return $author;
     }
-    public function store(array $data) :Author
+    public function store(StoreAuthorDTO $dto) :Author
     {
-        $author = $this->authorRepository->create($data);
+        $author = $this->authorRepository->create($dto->toArray());
         // 200 Author created successfully
         return $author;
     }
-    public function update(int $id, array $data)
+    public function update(int $id, UpdateAuthorDTO $dto)
     {
         $author = $this->authorRepository->find($id);
         // using guard clause(private method) to improve code readability and maintainability.
         $this->ensureAuthorExists($author);
 
-        $author = $this->authorRepository->update($id , $data);
+        $author = $this->authorRepository->update($id , $dto->toArray());
         // 200 Author updated successfully
         return $author;
     }

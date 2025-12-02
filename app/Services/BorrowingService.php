@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\BorrowRequestDTO;
 use App\Models\BorrowRecord;
 use App\Exceptions\BookAlreadyBorrowedException;
 use App\Exceptions\BookAlreadyReturnedException;
@@ -15,12 +16,12 @@ class BorrowingService
         $this->borrowRecordRepository = $borrowRecordRepository;
     }
     
-    public function borrow(string $userName, int $bookId) : BorrowRecord {
+    public function borrow(BorrowRequestDTO $dto) : BorrowRecord {
     // book already borrowed(Business Rule) -> throw custom Exception
-    $this->ensureBookIsNotBorrowed($bookId);
+    $this->ensureBookIsNotBorrowed($dto->book_id);
 
      // create borrow record
-     $borrowRecord = $this->borrowRecordRepository->create($userName, $bookId);
+     $borrowRecord = $this->borrowRecordRepository->create($dto->user_name, $dto->book_id);
 
     return $borrowRecord;
 

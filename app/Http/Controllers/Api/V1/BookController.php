@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\DTOs\BookListRequestDTO;
+use App\DTOs\StoreBookDTO;
+use App\DTOs\UpdateBookDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
@@ -24,7 +27,8 @@ class BookController extends Controller
     public function index(IndexBooksRequest $request)
     {
             try{
-                $books = $this->bookService->index($request->validated());
+                $dto = BookListRequestDTO::fromRequest($request);
+                $books = $this->bookService->index($dto);
                 return BookResource::collection($books);
                 // 422 Validation error is automatically handled by IndexBooksRequest
             } catch (\Exception $e) {
@@ -42,7 +46,8 @@ class BookController extends Controller
     public function store(StoreBookRequest $request)
     {
         try {
-            $book = $this->bookService->store($request->validated());
+            $dto = StoreBookDTO::fromRequest($request);
+            $book = $this->bookService->store($dto);
             return response()->json([
                 'message' => 'Book created successfully',
             ], 200);
@@ -87,7 +92,8 @@ class BookController extends Controller
     public function update(UpdateBookRequest $request, int $id)
     {
         try {
-           $book= $this->bookService->update($id, $request->validated());
+           $dto = UpdateBookDTO::fromRequest($request);
+           $book= $this->bookService->update($id, $dto);
            return response()->json([
             'message' => 'Book updated successfully',
         ], 200);

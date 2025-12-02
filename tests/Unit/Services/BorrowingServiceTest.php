@@ -10,6 +10,7 @@ use App\Exceptions\BookAlreadyReturnedException;
 use App\Exceptions\BookNotFoundException;
 use Mockery;
 use Tests\TestCase;
+use App\DTOs\BorrowRequestDTO;
 
 class BorrowingServiceTest extends TestCase
 {
@@ -36,13 +37,15 @@ class BorrowingServiceTest extends TestCase
     public function test_borrow_creates_record_when_book_is_available()
     {
         // Arrange: Prepare data
-        $userName = 'Ahmed Ashraf';
-        $bookId = 1;
+        $dto = new BorrowRequestDTO(
+            user_name: 'Ahmed Ashraf',
+            book_id: 1
+        );
         
         $fakeBorrowRecord = new BorrowRecord([
             'id' => 1,
-            'user_name' => $userName,
-            'book_id' => $bookId,
+            'user_name' => $dto->user_name,
+            'book_id' => $dto->book_id,
             'borrow_at' => now(),
             'return_at' => null
         ]);
@@ -51,23 +54,23 @@ class BorrowingServiceTest extends TestCase
         $this->mockRepository
             ->shouldReceive('isBookBorrowed')
             ->once()
-            ->with($bookId)
+            ->with($dto->book_id)
             ->andReturn(false); // Book is available!
 
         // Tell fake repository: create should succeed
         $this->mockRepository
             ->shouldReceive('create')
             ->once()
-            ->with($userName, $bookId)
+            ->with($dto->user_name, $dto->book_id)
             ->andReturn($fakeBorrowRecord);
 
         // Act: Borrow the book
-        $result = $this->borrowingService->borrow($userName, $bookId);
+        $result = $this->borrowingService->borrow($dto);
 
         // Assert: Check we got the borrow record
         $this->assertEquals($fakeBorrowRecord, $result);
-        $this->assertEquals($userName, $result->user_name);
-        $this->assertEquals($bookId, $result->book_id);
+        $this->assertEquals($dto->user_name, $result->user_name);
+        $this->assertEquals($dto->book_id, $result->book_id);
     }
 
     /**
@@ -81,13 +84,17 @@ class BorrowingServiceTest extends TestCase
             ->once()
             ->with(1)
             ->andReturn(true); // Book is already borrowed!
+        $dto = new BorrowRequestDTO(
+            user_name: 'Ahmed Ashraf',
+            book_id: 1
+        );
 
         // Assert: Expect exception
         $this->expectException(BookAlreadyBorrowedException::class);
         $this->expectExceptionMessage('The book is already borrowed');
 
         // Act: Try to borrow already borrowed book
-        $this->borrowingService->borrow('Ahmed', 1);
+        $this->borrowingService->borrow($dto);
     }
 
     /**

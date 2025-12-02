@@ -8,6 +8,8 @@ use App\Models\Book;
 use App\Exceptions\BookNotFoundException;
 use Mockery;
 use Tests\TestCase;
+use App\DTOs\BookListRequestDTO;
+use App\DTOs\UpdateBookDTO;
 
 class BookServiceTest extends TestCase
 {
@@ -38,16 +40,18 @@ class BookServiceTest extends TestCase
             new Book(['id' => 1, 'title' => '1984', 'author_id' => 1]),
             new Book(['id' => 2, 'title' => 'Animal Farm', 'author_id' => 1]),
         ]);
-        
+
+        $dto = new BookListRequestDTO(per_page: 15);
+
         // Tell fake repository what to return
         $this->mockRepository
             ->shouldReceive('paginate')
             ->once()
-            ->with(15)
+            ->with($dto->per_page)
             ->andReturn($fakeBooks);
         
         // Act: Call the service
-        $result = $this->bookService->index(['per_page' => 15]);
+        $result = $this->bookService->index($dto);
         
         // Assert: Verify result
         $this->assertEquals($fakeBooks, $result);
@@ -67,11 +71,12 @@ class BookServiceTest extends TestCase
             'author_id' => 1
         ]);
         
-        $updateData = [
-            'title' => 'New Title',
-            'description' => 'New Description',
-            'year' => 2023
-        ];
+        $dto = new UpdateBookDTO(
+            title: 'New Title',
+            description: 'New Description',
+            year: 2023,
+            author_id: 1
+        );
         
         $updatedBook = new Book([
             'id' => 1,
@@ -92,11 +97,11 @@ class BookServiceTest extends TestCase
         $this->mockRepository
             ->shouldReceive('update')
             ->once()
-            ->with(1, $updateData)
+            ->with(1, $dto->toArray())
             ->andReturn($updatedBook);
         
         // Act: Update the book
-        $result = $this->bookService->update(1, $updateData);
+        $result = $this->bookService->update(1, $dto);
         
         // Assert: Check updated book is returned
         $this->assertEquals('New Title', $result->title);
